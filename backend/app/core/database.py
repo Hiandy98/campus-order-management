@@ -25,3 +25,5 @@ SessionLocal = sessionmaker(
 def get_session() -> Generator[Session, None, None]:
     with SessionLocal() as session:
         yield session
+
+__all__ = ["get_session"]
