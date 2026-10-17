@@ -1,1 +1,1 @@
-from backend.app.interfaces.health_service import *
+from app.interfaces.health_service import *

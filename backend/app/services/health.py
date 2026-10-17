@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.interfaces.health_service import *
 from app.schemas.health import *
-from backend.app.core.exceptions import ServiceUnhealthyError
+from app.core.exceptions import ServiceUnhealthyError
 
 
 class DataBaseHealthChecker(IHealthChecker):
