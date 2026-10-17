@@ -42,8 +42,8 @@ class StockService(IStockService):
             name=product.name, price=product.price, stock=product.stock, soldout=product.soldout
         )
 
-    def get_all_stock(self) -> ...:
-        ...
+    def get_all_stock(self) -> list[Product]:
+        return self._stock_repository.get_all()
 
     def update_item(self, name: str, command: StockUpdateItemRequest) -> StockUpdateItemResponse:
         existing_stock = self._get_existing_stock_or_raise(name)
