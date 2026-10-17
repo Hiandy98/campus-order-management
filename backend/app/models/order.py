@@ -1,12 +1,12 @@
-from __future__ import annotations
-
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
 
 from app.models.order_status import OrderStatus
-from app.models.order_item import OrderItem
+
+if TYPE_CHECKING:
+    from app.models.order_item import OrderItem
 
 
 class Order(SQLModel, table=True):
@@ -26,7 +26,7 @@ class Order(SQLModel, table=True):
     cancelled_at: Optional[datetime] = None
     cancel_reason: Optional[str] = Field(default=None, max_length=200)
 
-    items: list[OrderItem] = Relationship(
+    items: list["OrderItem"] = Relationship(
         back_populates="order",
         cascade_delete=True,
     )
