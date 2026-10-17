@@ -8,7 +8,7 @@ class IStockService(ABC):
         ...
 
     @abstractmethod
-    def get_all_stock(self) -> ...:
+    def get_all_stock(self) -> list[Product]:
         ...
 
     @abstractmethod
