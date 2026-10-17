@@ -40,3 +40,7 @@ class StockRespository:
     def get_all(self) -> list[Product]:
         stocks = self._db.scalars(select(Stock)).all()
         return [Product.model_validate(stock) for stock in stocks]
+
+    def remove(self, stock: Stock) -> None:
+        self._db.delete(stock)
+        self._db.flush()
