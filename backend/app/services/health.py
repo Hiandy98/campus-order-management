@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.interfaces.health_service import *
 from app.schemas.health import *
-from backend.app.core.exceptions.service_unhealthy_error import ServiceUnhealthyError
+from backend.app.core.exceptions import ServiceUnhealthyError
 
 
 class DataBaseHealthChecker(IHealthChecker):
@@ -32,7 +32,6 @@ class DataBaseHealthChecker(IHealthChecker):
         except Exception as e:
             logger.warning(f"Database query encountered unexpected error: {str(e)}")
             return False
-
 
 
 class HealthCheckService(IHealthCheck):
