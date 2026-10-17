@@ -21,3 +21,11 @@ def add_stock(
     - **stock**: 庫存量
     """
     return service.add_item(command)
+
+@router.patch(
+    "/{name}", response_model=StockUpdateItemResponse
+)
+def update_product(
+    name: str, command: StockUpdateItemRequest, service: IStockService = Depends(get_stock_service)
+):
+    return service.update_item(name, command)
