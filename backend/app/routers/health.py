@@ -2,15 +2,12 @@ from fastapi import APIRouter, Depends
 
 from sqlalchemy.orm import Session
 
-from app.services.health import HealthCheckService
-from app.interfaces.health_service import IHealthCheck
 from app.schemas.health import ReadinessResponse
-from app.core.database import get_session
+from app.interfaces.health_service import IHealthCheck
+from app.core.dependencies import get_session, get_health_service
+
 
 router = APIRouter(prefix="/health", tags=["System"])
-
-def get_health_service() -> IHealthCheck:
-    return HealthCheckService()
 
 @router.get("/liveness")
 def liveness_check():
@@ -21,7 +18,10 @@ def liveness_check():
     return {"status": "ok", "service": "up"}
 
 @router.get("/readiness", response_model=ReadinessResponse)
-def readiness_check(db: Session = Depends(get_session)):
+def readiness_check(
+        db: Session = Depends(get_session), 
+        HealthCheckService: IHealthCheck = Depends(get_health_service)
+    ):
     """**系統就緒檢查**
     
     檢查應用程式是否已準備好接收流量(例如:資料庫連線是否正常)\n
