@@ -1,3 +1,5 @@
+from typing import Optional
+
 from dataclasses import dataclass
 from pydantic import BaseModel, ConfigDict
 
@@ -24,4 +26,24 @@ class StockAddItemResponse:
     soldout: bool
 
 
-__all__ = ["Product", "StockAddItemRequest", "StockAddItemResponse"]
+@dataclass(frozen=True)
+class StockUpdateItemRequest:
+    price: Optional[int] = None
+    stock: Optional[int] = None
+    soldout: Optional[bool] = None
+
+@dataclass(frozen=True)
+class StockUpdateItemResponse:
+    name: str
+    price: int
+    stock: int
+    soldout: bool
+
+
+__all__ = [
+        "Product", 
+        "StockAddItemRequest", 
+        "StockAddItemResponse", 
+        "StockUpdateItemRequest", 
+        "StockUpdateItemResponse"
+    ]
