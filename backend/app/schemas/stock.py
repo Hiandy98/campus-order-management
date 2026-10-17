@@ -1,5 +1,3 @@
-from typing import Any
-
 from dataclasses import dataclass
 from pydantic import BaseModel, ConfigDict
 
@@ -24,3 +22,6 @@ class StockAddItemResponse:
     price: int
     stock: int
     soldout: bool
+
+
+__all__ = ["Product", "StockAddItemRequest", "StockAddItemResponse"]
