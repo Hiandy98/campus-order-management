@@ -85,3 +85,8 @@ class StockService(IStockService):
             stock=product.stock,
             soldout=product.soldout
         )
+
+    def remove_item(self, name: str) -> None:
+        existing_stock = self._get_existing_stock_or_raise(name)
+        self._stock_repository.remove(existing_stock)
+        self._stock_repository.commit()
