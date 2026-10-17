@@ -4,8 +4,7 @@ from loguru import logger
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.core.exceptions import DomainException
-from app.core.exceptions.error_response import ErrorResponse
+from backend.app.core.exceptions.config import *
 
 
 class GlobalExceptionHandler:

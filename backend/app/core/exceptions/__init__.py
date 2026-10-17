@@ -1,1 +1,1 @@
-from app.core.exceptions.domain_exception import *
+from app.core.exceptions.service_unhealthy_error import *

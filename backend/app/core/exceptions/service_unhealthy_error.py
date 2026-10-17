@@ -1,5 +1,5 @@
 from typing import Any, Sequence
-from exceptions import DomainException
+from backend.app.core.exceptions.config import DomainException
 from app.schemas.health import HealthCheckResult
 
 class ServiceUnhealthyError(DomainException):
