@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from app.schemas.stock import *
 
 
 class IStockService(ABC):
     @abstractmethod
-    def add_item(self) -> ...:
+    def add_item(self, command: StockAddItemRequest) -> StockAddItemResponse:
         ...
 
     @abstractmethod
