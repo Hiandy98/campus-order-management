@@ -1,5 +1,7 @@
+from loguru import logger
 from typing import Generator
 
+from sqlmodel import SQLModel
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
@@ -26,4 +28,9 @@ def get_session() -> Generator[Session, None, None]:
     with SessionLocal() as session:
         yield session
 
-__all__ = ["get_session"]
+def create_db_and_tables():
+    logger.info("Checking and creating data tables in the cloud database...")
+    SQLModel.metadata.create_all(engine)
+    logger.info("Data sheet check completed")
+
+__all__ = ["get_session", "create_db_and_tables"]
