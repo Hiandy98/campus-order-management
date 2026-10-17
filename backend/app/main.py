@@ -1,11 +1,9 @@
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.core.global_exception_handler import GlobalExceptionHandler
+from app.routers import router
 
-@app.get("/")
-def read_root():
-    return {"status": "FastAPI is running!"}
+app = FastAPI(title="Campus order manager backend")
 
-@app.get("/api/v1/health/liveness")
-def liveness_check():
-    return {"status": "ok"}
+app.include_router(router)
+GlobalExceptionHandler(app)
