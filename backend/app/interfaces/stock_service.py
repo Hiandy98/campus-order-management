@@ -14,3 +14,7 @@ class IStockService(ABC):
     @abstractmethod
     def update_item(self, name: str, command: StockUpdateItemRequest) -> StockUpdateItemResponse:
         ...
+
+    @abstractmethod
+    def remove_item(self, name: str) -> None:
+        ...
