@@ -28,4 +28,22 @@ def add_stock(
 def update_product(
     name: str, command: StockUpdateItemRequest, service: IStockService = Depends(get_stock_service)
 ):
+    """
+    更新物品
+
+    (不填則不動)
+
+    - **price**: 價格
+    - **stock**: 庫存量(非+多少庫存)
+    - **soldout**: 是否開放採購
+    """
     return service.update_item(name, command)
+
+@router.get(
+    "", response_model=list[Product]
+)
+def get_all_stock(service: IStockService = Depends(get_stock_service)):
+    """
+    取得已加入的商品清單與庫存量
+    """
+    return service.get_all_stock()
