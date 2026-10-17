@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlmodel import col
+from sqlmodel import col, select
 
 from app.schemas.stock import Product
 from app.models import Stock
@@ -36,3 +36,7 @@ class StockRespository:
         self._db.refresh(existing_stock)
         
         return Product.model_validate(existing_stock)
+
+    def get_all(self) -> list[Product]:
+        stocks = self._db.scalars(select(Stock)).all()
+        return [Product.model_validate(stock) for stock in stocks]
