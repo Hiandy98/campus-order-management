@@ -1,5 +1,4 @@
 from fastapi import Depends, status, APIRouter
-from sqlalchemy.orm import Session
 
 from app.interfaces.stock_service import IStockService
 from app.schemas.stock import *
