@@ -47,3 +47,15 @@ def get_all_stock(service: IStockService = Depends(get_stock_service)):
     取得已加入的商品清單與庫存量
     """
     return service.get_all_stock()
+
+@router.delete(
+    "/{name}", status_code=status.HTTP_204_NO_CONTENT
+)
+def delete_by_name(name: str, service: IStockService = Depends(get_stock_service)):
+    """
+    刪除商品
+
+    - **name**: 品名
+    """
+    return service.remove_item(name)
+
