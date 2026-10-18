@@ -28,6 +28,7 @@ class OrderService(IOrderService):
 
     def _process_items(self, items_req: list[OrderItemCreateRequest]) -> ProcessedItemsResult:
         result = ProcessedItemsResult(total_price=0, order_items=[], summaries=[])
+        
         for item_req in items_req:
             item_res = self._process_single_item(item_req)
             result.total_price += item_res.price
@@ -40,6 +41,9 @@ class OrderService(IOrderService):
         
         self._validate_stock_availability(stock, item_req.quantity)
         
+        if stock.price <= 0:
+            raise ValueError(f"商品 {stock.name} 價格異常 ({stock.price})，無法下單")
+
         self._deduct_and_update_stock(stock, item_req.quantity)
         
         return ProcessedItemData(
@@ -74,7 +78,7 @@ class OrderService(IOrderService):
 
     def _create_item_obj(self, name: str, price: int, quantity: int) -> OrderItem:
         return OrderItem(
-            id=None, order_id=0, name=name, price=price, quantity=quantity
+            id=None, order_id=None, name=name, price=price, quantity=quantity
         )
 
     def _create_order_obj(self, pickup_no: int, items_data: ProcessedItemsResult) -> Order:
@@ -96,13 +100,9 @@ class OrderService(IOrderService):
 
     def get_orders(self, status: str | None = None) -> list[OrderQueryResponse]:
         all_orders = self._order_repository.get_all_with_items()
-        
         target_statuses = self._parse_status_param(status)
-        
         filtered_orders = self._filter_orders_by_statuses(all_orders, target_statuses)
-        
         sorted_orders = self._sort_orders_by_business_rules(filtered_orders, target_statuses)
-        
         return self._to_query_responses(sorted_orders)
 
     def _parse_status_param(self, status: str | None = None) -> list[str]:
@@ -126,7 +126,6 @@ class OrderService(IOrderService):
     def _to_query_responses(self, orders: list[Order]) -> list[OrderQueryResponse]:
         return [OrderQueryResponse.model_validate(order) for order in orders]
 
-    
     def get_specific_order(self) -> ...:
         ...
 
