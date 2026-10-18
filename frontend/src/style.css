@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  -webkit-tap-highlight-color: transparent; /* 去掉手機點擊藍色高亮，手感差很多 */
+  overscroll-behavior-y: none;
+}
