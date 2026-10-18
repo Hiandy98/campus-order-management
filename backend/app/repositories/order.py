@@ -16,6 +16,9 @@ class OrderRepository:
     def refresh(self, order: Order) -> None:
         self._db.refresh(order)
 
+    def rollback(self) -> None:
+        self._db.rollback()
+
     def get_max_pickup(self) -> int:
         return self._db.exec(select(func.max(Order.pickup_no))).one()
 

@@ -15,10 +15,16 @@ class OrderService(IOrderService):
         self._stock_repository = stock_repository
 
     def create_order(self, command: OrderCreate) -> OrderResponse:
-        pickup_no = self._generate_pickup_num()
-        items_data = self._process_items(command.items)
-        new_order = self._create_order_obj(pickup_no, items_data)
-        return OrderResponse.model_validate(self._persist_order(new_order))
+        try:
+            pickup_no = self._generate_pickup_num()
+            items_data = self._process_items(command.items) 
+            new_order = self._create_order_obj(pickup_no, items_data)
+            saved_order = self._persist_order(new_order)
+            self._order_repository.commit() 
+            return OrderResponse.model_validate(saved_order)
+        except Exception as e:
+            self._order_repository.rollback() 
+            raise e
 
     def _generate_pickup_num(self) -> int:
         return (self._order_repository.get_max_pickup() or 0) + 1
