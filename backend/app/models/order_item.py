@@ -10,7 +10,7 @@ class OrderItem(SQLModel, table=True):
     __tablename__: Any = "order_items"
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    order_id: int = Field(
+    order_id: int | None = Field(
         foreign_key="orders.id",
         index=True,
         ondelete="CASCADE",
