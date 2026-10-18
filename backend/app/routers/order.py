@@ -1,6 +1,6 @@
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Depends, Query
 
-from app.schemas.order import OrderResponse, OrderCreate
+from app.schemas.order import OrderResponse, OrderCreate, OrderQueryResponse
 from app.interfaces.order_service import IOrderService
 from app.core.dependencies import get_oredr_service
 
@@ -33,4 +33,16 @@ def create_order(request: OrderCreate, service: IOrderService = Depends(get_ored
     ```
     """
     return service.create_order(request)
+
+
+@router.get("", response_model=list[OrderQueryResponse])
+def get_orders(
+    status: str | None = Query(
+        None, 
+        description="篩選狀態，多值以逗號分隔，例如: pending,ready。不傳則拉取全部。"
+    ),
+    service: IOrderService = Depends(get_oredr_service)
+):
+    return service.get_orders(status=status)
+
 
