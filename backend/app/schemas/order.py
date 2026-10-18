@@ -2,6 +2,7 @@
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from typing import List, Optional
+from app.models import OrderItem
 from app.models.order_status import OrderStatus
 
 
@@ -36,7 +37,25 @@ class OrderResponse(BaseModel):
     items: List[OrderItemResponse]
 
 
+class ProcessedItemData(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    price: int
+    summary: str
+    order_item: OrderItem
+
+
+class ProcessedItemsResult(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    total_price: int
+    order_items: list[OrderItem]
+    summaries: list[str]
+
+
+
 __all__ = [
     "OrderCreate",
-    "OrderResponse"
+    "OrderItemCreateRequest",
+    "OrderResponse",
+    "ProcessedItemData",
+    "ProcessedItemsResult"
 ]
