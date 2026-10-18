@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #faf9f6;
+  --color-surface: #ffffff;
+  --color-line: #e8e5df;
+  --color-line-strong: #d6d2ca;
+
+  --color-ink: #1a1a1a;
+  --color-ink-soft: #6b6862;
+  --color-ink-mute: #a8a49d;
+
+  --color-brand: #2d4b3d;
+  --color-brand-press: #1f362a;
+  --color-brand-ink: #f5f2ea;
+  --color-warn: #a85436;
+  --color-danger: #b1392c;
+}
+
+@layer base {
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
+
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+      "PingFang TC", "Noto Sans TC", sans-serif;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+    font-feature-settings: "ss01";
+
+    user-select: none;               /* 禁止反白選取文字 */
+    -webkit-touch-callout: none; 
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    line-height: 1;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-mute);
+    font-weight: 600;
+  }
+}

@@ -66,6 +66,7 @@ class OrderQueryResponse(BaseModel):
     items_summary: str
     created_at: datetime
     ready_at: Optional[datetime] = None
+    cancel_reason: Optional[str] = None
     items: List[OrderItemQueryResponse]
 
 
