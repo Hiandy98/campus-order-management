@@ -46,7 +46,7 @@ def get_orders(
     return service.get_orders(status=status)
 
 
-@router.patch("/{id}/status", response_model=OrderResponse)
+@router.patch("/{order_id}/status", response_model=OrderResponse)
 def change_order_status(
     order_id: int,
     payload: OrderStatusUpdate,
