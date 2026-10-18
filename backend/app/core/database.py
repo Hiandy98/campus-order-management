@@ -29,8 +29,7 @@ def get_session() -> Generator[Session, None, None]:
     with SessionLocal() as session:
         try:
             yield session
-            if session.dirty or session.new or session.deleted:
-                session.commit()
+            session.commit()
         except Exception:
             session.rollback()
             raise
