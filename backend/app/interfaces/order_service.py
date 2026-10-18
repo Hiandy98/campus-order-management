@@ -10,7 +10,7 @@ class IOrderService(ABC):
         ...
 
     @abstractmethod
-    def get_orders(self) -> ...:
+    def get_orders(self, status: str | None = None) -> list[OrderQueryResponse]:
         ...
 
     @abstractmethod
