@@ -1,6 +1,6 @@
 from fastapi import APIRouter, status, Depends, Query
 
-from app.schemas.order import OrderResponse, OrderCreate, OrderQueryResponse
+from app.schemas.order import OrderResponse, OrderCreate, OrderQueryResponse, OrderStatusUpdate
 from app.interfaces.order_service import IOrderService
 from app.core.dependencies import get_oredr_service
 
@@ -44,5 +44,14 @@ def get_orders(
     service: IOrderService = Depends(get_oredr_service)
 ):
     return service.get_orders(status=status)
+
+
+@router.patch("/{id}/status", response_model=OrderResponse)
+def change_order_status(
+    order_id: int,
+    payload: OrderStatusUpdate,
+    service: IOrderService = Depends(get_oredr_service),
+):
+    return service.change_status(order_id, payload)
 
 
