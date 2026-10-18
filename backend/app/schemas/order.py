@@ -51,11 +51,31 @@ class ProcessedItemsResult(BaseModel):
     summaries: list[str]
 
 
+class OrderItemQueryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    name: str
+    price: int
+    quantity: int
+
+class OrderQueryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    pickup_no: int
+    status: str
+    total: int
+    items_summary: str
+    created_at: datetime
+    ready_at: Optional[datetime] = None
+    items: List[OrderItemQueryResponse]
+
+
 
 __all__ = [
     "OrderCreate",
     "OrderItemCreateRequest",
     "OrderResponse",
     "ProcessedItemData",
-    "ProcessedItemsResult"
+    "ProcessedItemsResult",
+    "OrderQueryResponse",
+    "OrderItemQueryResponse"
 ]
