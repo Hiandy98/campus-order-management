@@ -18,5 +18,5 @@ class IOrderService(ABC):
         ...
 
     @abstractmethod
-    def change_status(self) -> ...:
+    def change_status(self, order_id: int, command: OrderStatusUpdate) -> OrderResponse:
         ...
