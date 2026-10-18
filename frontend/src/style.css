@@ -34,6 +34,9 @@
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior-y: none;
     font-feature-settings: "ss01";
+
+    user-select: none;               /* 禁止反白選取文字 */
+    -webkit-touch-callout: none; 
   }
 
   .tabular {
