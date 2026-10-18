@@ -2,6 +2,8 @@
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { api } from '../api'
+import PageLayout from '../components/PageLayout.vue'
+import PageHeader from '../components/PageHeader.vue'
 
 const state = ref<'loading' | 'ok' | 'error'>('loading')
 const message = ref('')
@@ -20,23 +22,19 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="mx-auto flex min-h-screen w-full max-w-3xl flex-col px-5 pt-8 pb-10">
-    
-    <header class="flex items-start justify-between">
-      <div>
-        <p class="eyebrow mb-2">POS System</p>
-        <h1 class="text-3xl font-bold tracking-tight text-ink">點餐區</h1>
-      </div>
-      
-      <div class="flex gap-4 pt-1">
-        <RouterLink to="/kitchen" class="text-sm font-medium text-ink-mute hover:text-ink transition-colors">
-          查看備餐 ↗
-        </RouterLink>
-        <RouterLink to="/pickup" class="text-sm font-medium text-ink-mute hover:text-ink transition-colors">
-          查看取餐 ↗
-        </RouterLink>
-      </div>
-    </header>
+  <PageLayout>
+    <PageHeader eyebrow="POS System" title="點餐區">
+      <template #action>
+        <div class="flex gap-4">
+          <RouterLink to="/kitchen" class="text-sm font-medium text-ink-mute hover:text-ink transition-colors">
+            查看備餐 ↗
+          </RouterLink>
+          <RouterLink to="/pickup" class="text-sm font-medium text-ink-mute hover:text-ink transition-colors">
+            查看取餐 ↗
+          </RouterLink>
+        </div>
+      </template>
+    </PageHeader>
 
     <main class="mt-12 flex-1">
       <template v-if="state === 'loading'">
@@ -55,6 +53,5 @@ onMounted(async () => {
         <p class="mt-2 text-sm text-ink-soft">系統已就緒，請開始點餐。</p>
       </template>
     </main>
-    
-  </div>
+  </PageLayout>
 </template>
