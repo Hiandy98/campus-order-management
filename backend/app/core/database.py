@@ -27,7 +27,11 @@ SessionLocal = sessionmaker(
 
 def get_session() -> Generator[Session, None, None]:
     with SessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except Exception:
+            session.rollback()
+            raise
 
 def create_db_and_tables():
     logger.info("Checking and creating data tables in the cloud database...")
