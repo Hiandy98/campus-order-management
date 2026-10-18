@@ -30,7 +30,24 @@ const cartTotalPrice = computed(() => {
 
 const fetchStocks = async () => {
   try {
-    stocks.value = await api.getStocks()
+    const data = await api.getStocks()
+    
+    const savedOrder = JSON.parse(localStorage.getItem('pos_custom_order') || '[]') as string[]
+    
+    data.sort((a, b) => {
+      const indexA = savedOrder.indexOf(a.name)
+      const indexB = savedOrder.indexOf(b.name)
+      
+      const posA = indexA === -1 ? 999 : indexA
+      const posB = indexB === -1 ? 999 : indexB
+      
+      if (posA === 999 && posB === 999) {
+        return a.name.localeCompare(b.name)
+      }
+      return posA - posB
+    })
+    
+    stocks.value = data
     errorMsg.value = ''
   } catch (e: any) {
     errorMsg.value = e.message
