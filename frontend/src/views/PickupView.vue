@@ -25,6 +25,8 @@ let hiddenIds = new Set<number>(JSON.parse(localStorage.getItem(HIDDEN_KEY) || '
 let previousReadyIds = new Set<number>()
 let previousCancelledIds = new Set<number>()
 
+const processingIds = new Set<number>()
+
 const fetchOrders = async () => {
   try {
     const [readyData, cancelledData] = await Promise.all([
@@ -32,7 +34,9 @@ const fetchOrders = async () => {
       api.listOrders('cancelled')
     ])
     
-    readyData.sort((a, b) => {
+    const filteredReady = readyData.filter(o => !processingIds.has(o.id))
+    
+    filteredReady.sort((a, b) => {
       const timeA = new Date(a.ready_at || a.created_at).getTime()
       const timeB = new Date(b.ready_at || b.created_at).getTime()
       return timeA - timeB
@@ -40,20 +44,20 @@ const fetchOrders = async () => {
 
     const validCancelled = cancelledData
       .filter((o) => !hiddenIds.has(o.id))
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // 剛取消的排前面
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
     if (!isLoading.value) {
-      const hasNewReady = readyData.some((o) => !previousReadyIds.has(o.id))
+      const hasNewReady = filteredReady.some((o) => !previousReadyIds.has(o.id))
       if (hasNewReady && previousReadyIds.size > 0) playNewOrder()
 
       const hasNewCancel = validCancelled.some((o) => !previousCancelledIds.has(o.id))
       if (hasNewCancel && previousCancelledIds.size > 0) playAlert()
     }
     
-    previousReadyIds = new Set(readyData.map((o) => o.id))
+    previousReadyIds = new Set(filteredReady.map((o) => o.id))
     previousCancelledIds = new Set(validCancelled.map((o) => o.id))
 
-    readyOrders.value = readyData
+    readyOrders.value = filteredReady
     cancelledOrders.value = validCancelled
     errorMsg.value = ''
   } catch (e: any) {
@@ -61,6 +65,25 @@ const fetchOrders = async () => {
   } finally {
     isLoading.value = false
   }
+}
+
+const optimisticRemove = (id: number) => {
+  processingIds.add(id)
+
+  const index = readyOrders.value.findIndex((o) => o.id === id)
+  if (index === -1) return null
+  const removed = readyOrders.value[index]
+  readyOrders.value.splice(index, 1)
+  previousReadyIds.delete(id)
+  return removed
+}
+
+const restoreOrder = (order: Order) => {
+  processingIds.delete(order.id)
+  
+  readyOrders.value.push(order)
+  readyOrders.value.sort((a, b) => new Date(a.ready_at || a.created_at).getTime() - new Date(b.ready_at || b.created_at).getTime())
+  previousReadyIds.add(order.id)
 }
 
 usePolling(fetchOrders, 3000)

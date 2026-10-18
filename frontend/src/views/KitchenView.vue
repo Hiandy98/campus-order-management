@@ -20,32 +20,51 @@ const CANCEL_REASONS = ['客人跑了', '餐點做錯', '食材沒了', '其他'
 
 let previousIds = new Set<number>()
 
+const processingIds = new Set<number>()
+
 const fetchOrders = async () => {
   try {
     const data = await api.listOrders('pending')
     
-    data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    const filteredData = data.filter(o => !processingIds.has(o.id))
+    
+    filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
     if (!isLoading.value) {
-      const currentIds = new Set(data.map((o) => o.id))
-      
-      const hasNew = data.some((o) => !previousIds.has(o.id))
-      if (hasNew && previousIds.size > 0) {
-        playNewOrder()
-      }
-      
+      const currentIds = new Set(filteredData.map((o) => o.id))
+      const hasNew = filteredData.some((o) => !previousIds.has(o.id))
+      if (hasNew && previousIds.size > 0) playNewOrder()
       previousIds = currentIds
     } else {
-      previousIds = new Set(data.map((o) => o.id))
+      previousIds = new Set(filteredData.map((o) => o.id))
     }
 
-    orders.value = data
+    orders.value = filteredData
     errorMsg.value = ''
   } catch (e: any) {
     errorMsg.value = e.message
   } finally {
     isLoading.value = false
   }
+}
+
+const optimisticRemove = (id: number) => {
+  processingIds.add(id)
+  
+  const index = orders.value.findIndex((o) => o.id === id)
+  if (index === -1) return null
+  const removed = orders.value[index]
+  orders.value.splice(index, 1)
+  previousIds.delete(id)
+  return removed
+}
+
+const restoreOrder = (order: Order) => {
+  processingIds.delete(order.id)
+  
+  orders.value.push(order)
+  orders.value.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  previousIds.add(order.id)
 }
 
 usePolling(fetchOrders, 2000)
