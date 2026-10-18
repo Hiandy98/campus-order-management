@@ -15,16 +15,11 @@ class OrderService(IOrderService):
         self._stock_repository = stock_repository
 
     def create_order(self, command: OrderCreate) -> OrderResponse:
-        try:
-            pickup_no = self._generate_pickup_num()
-            items_data = self._process_items(command.items) 
-            new_order = self._create_order_obj(pickup_no, items_data)
-            saved_order = self._persist_order(new_order)
-            self._order_repository.commit() 
-            return OrderResponse.model_validate(saved_order)
-        except Exception as e:
-            self._order_repository.rollback() 
-            raise e
+        pickup_no = self._generate_pickup_num()
+        items_data = self._process_items(command.items)
+        new_order = self._create_order_obj(pickup_no, items_data)
+        saved_order = self._persist_order(new_order)
+        return OrderResponse.model_validate(saved_order)
 
     def _generate_pickup_num(self) -> int:
         return (self._order_repository.get_max_pickup() or 0) + 1
@@ -94,7 +89,6 @@ class OrderService(IOrderService):
 
     def _persist_order(self, order: Order) -> Order:
         saved_order = self._order_repository.create(order)
-        self._order_repository.commit()
         self._order_repository.refresh(saved_order)
         return saved_order
 
