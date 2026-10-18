@@ -15,16 +15,13 @@ const errorMsg = ref('')
 
 const { playNewOrder, playAlert } = useSound()
 
-// 取消選單狀態
 const isCancelSheetOpen = ref(false)
 const targetOrderId = ref<number | null>(null)
 const CANCEL_REASONS = ['客人跑了', '餐點做錯', '食材沒了', '其他']
 
-// 用於記錄已隱藏的取消單 ID
 const HIDDEN_KEY = 'pos_hidden_cancelled_ids'
 let hiddenIds = new Set<number>(JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]'))
 
-// 用於比對音效的上一輪資料
 let previousReadyIds = new Set<number>()
 let previousCancelledIds = new Set<number>()
 
@@ -35,20 +32,16 @@ const fetchOrders = async () => {
       api.listOrders('cancelled')
     ])
     
-    // 1. 處理 READY 訂單（依 ready_at 升序）
     readyData.sort((a, b) => {
       const timeA = new Date(a.ready_at || a.created_at).getTime()
       const timeB = new Date(b.ready_at || b.created_at).getTime()
       return timeA - timeB
     })
 
-    // 2. 處理 CANCELLED 訂單
-    // 移除 ready_at 的判斷，只要是取消單且未被隱藏就顯示
     const validCancelled = cancelledData
       .filter((o) => !hiddenIds.has(o.id))
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) // 剛取消的排前面
 
-    // --- 音效比對邏輯 ---
     if (!isLoading.value) {
       const hasNewReady = readyData.some((o) => !previousReadyIds.has(o.id))
       if (hasNewReady && previousReadyIds.size > 0) playNewOrder()
@@ -72,14 +65,12 @@ const fetchOrders = async () => {
 
 usePolling(fetchOrders, 3000)
 
-// --- 隱藏取消單 ---
 const hideCancelledOrder = (id: number) => {
   hiddenIds.add(id)
   localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(hiddenIds)))
   cancelledOrders.value = cancelledOrders.value.filter((o) => o.id !== id)
 }
 
-// --- 樂觀更新（客人取餐 / 取消） ---
 const optimisticRemove = (id: number) => {
   const index = readyOrders.value.findIndex((o) => o.id === id)
   if (index === -1) return null
@@ -146,7 +137,6 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
       <p v-if="isLoading && totalCount === 0" class="text-ink-mute animate-pulse">載入訂單中...</p>
       <p v-else-if="errorMsg" class="text-danger">{{ errorMsg }}</p>
 
-      <!-- 空狀態 -->
       <div v-else-if="totalCount === 0" class="py-20 text-center">
         <p class="text-2xl font-bold text-ink-mute/50">目前沒有待取餐訂單</p>
         <p class="mt-2 text-sm text-ink-mute">備餐完成後會自動出現在這裡</p>
@@ -154,7 +144,6 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
 
       <div v-else class="flex flex-col gap-6">
         
-        <!-- 被取消的訂單區塊 -->
         <div v-if="cancelledOrders.length > 0" class="flex flex-col gap-3">
           <p class="eyebrow text-danger">已取消 (請確認)</p>
           <div 
@@ -175,7 +164,6 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
           </div>
         </div>
 
-        <!-- 待取餐訂單區塊 -->
         <div v-if="readyOrders.length > 0" class="flex flex-col gap-4">
           <OrderCard
             v-for="order in readyOrders"
@@ -190,7 +178,6 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
       </div>
     </main>
 
-    <!-- 取消原因 Bottom Sheet -->
     <Transition
       enter-active-class="transition-opacity duration-200"
       enter-from-class="opacity-0"
