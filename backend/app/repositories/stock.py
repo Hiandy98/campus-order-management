@@ -1,9 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlmodel import col, select
-
-from app.schemas.stock import Product
+from sqlmodel import col, select, Session
 from app.models import Stock
-
 
 class StockRespository:
 
@@ -12,47 +8,34 @@ class StockRespository:
     def __init__(self, db: Session):
         self._db = db
 
-    def commit(self) -> None:
-        self._db.commit()
-
-    def refresh(self, product: Product):
-        stock = Stock.model_validate(product.model_dump())
-        self._db.refresh(stock)
-
     def exists_by_name(self, name: str) -> bool:
-        return self._db.query(Stock).filter(col(Stock.name) == name).first() is not None
+        statement = select(Stock).where(col(Stock.name) == name)
+        return self._db.exec(statement).first() is not None
 
     def find_by_name(self, name: str) -> Stock | None:
-        return self._db.query(Stock).filter(col(Stock.name) == name).first()
+        statement = select(Stock).where(col(Stock.name) == name)
+        return self._db.exec(statement).first()
 
-    def create(self, product: Product) -> Product:
-        new_stock = Stock.model_validate(product.model_dump())
-        self._db.add(new_stock)
+    def create(self, stock: Stock) -> Stock:
+        self._db.add(stock)
         self._db.flush()
-        self._db.refresh(new_stock)
-        return Product.model_validate(new_stock)
+        self._db.refresh(stock)
+        return stock
 
-    def update_partial(self, existing_stock: Stock, update_data: dict) -> Product:
+    def update_partial(self, existing_stock: Stock, update_data: dict) -> Stock:
         existing_stock.sqlmodel_update(update_data)
-        
         self._db.add(existing_stock)
         self._db.flush()
-        self._db.refresh(existing_stock)
-        
-        return Product.model_validate(existing_stock)
+        self._db.refresh(existing_stock) 
+        return existing_stock
 
-    def get_all(self) -> list[Product]:
-        stocks = self._db.scalars(select(Stock)).all()
-        return [Product.model_validate(stock) for stock in stocks]
+    def get_all(self) -> list[Stock]:
+        return list(self._db.exec(select(Stock)).all())
 
     def remove(self, stock: Stock) -> None:
         self._db.delete(stock)
         self._db.flush()
 
     def find_by_name_for_update(self, name: str) -> Stock | None:
-        return (
-            self._db.query(Stock)
-            .filter(col(Stock.name) == name)
-            .with_for_update()
-            .first()
-        )
+        statement = select(Stock).where(col(Stock.name) == name).with_for_update()
+        return self._db.exec(statement).first()
