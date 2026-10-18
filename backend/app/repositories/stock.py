@@ -44,3 +44,11 @@ class StockRespository:
     def remove(self, stock: Stock) -> None:
         self._db.delete(stock)
         self._db.flush()
+
+    def find_by_name_for_update(self, name: str) -> Stock | None:
+        return (
+            self._db.query(Stock)
+            .filter(col(Stock.name) == name)
+            .with_for_update()
+            .first()
+        )
