@@ -24,26 +24,34 @@ class StockService(IStockService):
     def add_item(self, command: StockAddItemRequest) -> StockAddItemResponse:
         self._is_exit_by_name(command.name)
 
-        product_schema = self._to_product_schema(command)
+        stock_entity = self._to_stock_entity(command)
 
-        saved_product = self._stock_repository.create(product=product_schema)
+        saved_stock = self._stock_repository.create(stock_entity)
         
-        self._stock_repository.refresh(saved_product)
+        return self._to_add_item_response(saved_stock)
 
-        return self._to_add_item_response(saved_product)
+    def _to_stock_entity(self, command: StockAddItemRequest) -> Stock:
+        return Stock(
+            name=command.name,
+            price=command.price,
+            stock=command.stock,
+            soldout=self._calculate_soldout(command.stock)
+        )
 
-    def _to_product_schema(self, command: StockAddItemRequest) -> Product:
-        product_dict = asdict(command)
-        product_dict["soldout"] = self._calculate_soldout(command.stock)
-        return Product.model_validate(product_dict)
-
-    def _to_add_item_response(self, product: Product) -> StockAddItemResponse:
+    def _to_add_item_response(self, stock: Stock) -> StockAddItemResponse:
         return StockAddItemResponse(
-            name=product.name, price=product.price, stock=product.stock, soldout=product.soldout
+            name=stock.name, 
+            price=stock.price, 
+            stock=stock.stock, 
+            soldout=stock.soldout
         )
 
     def get_all_stock(self) -> list[Product]:
-        return self._stock_repository.get_all()
+        stocks = self._stock_repository.get_all()
+        return [self._to_product_schema(stock) for stock in stocks]
+
+    def _to_product_schema(self, stock: Stock) -> Product:
+        return Product.model_validate(stock)
 
     def update_item(self, name: str, command: StockUpdateItemRequest) -> StockUpdateItemResponse:
         existing_stock = self._get_existing_stock_or_raise(name)
@@ -52,21 +60,17 @@ class StockService(IStockService):
         
         processed_data = self._process_business_rules(update_data)
         
-        updated_product = self._stock_repository.update_partial(
+        updated_stock = self._stock_repository.update_partial(
             existing_stock=existing_stock, 
             update_data=processed_data
         )
 
-        self._stock_repository.refresh(updated_product)
-        
-        return self._to_update_item_response(updated_product)
-
+        return self._to_update_item_response(updated_stock)
 
     def _get_existing_stock_or_raise(self, name: str) -> Stock:
         existing_stock = self._stock_repository.find_by_name(name)
         if not existing_stock:
             raise NotFoundError(f"找不到商品 '{name}'，無法進行更新")
-
         return existing_stock
 
     def _extract_clean_update_data(self, command: StockUpdateItemRequest) -> dict:
@@ -78,12 +82,12 @@ class StockService(IStockService):
             update_data["soldout"] = self._calculate_soldout(update_data["stock"])
         return update_data
 
-    def _to_update_item_response(self, product: Product) -> StockUpdateItemResponse:
+    def _to_update_item_response(self, stock: Stock) -> StockUpdateItemResponse:
         return StockUpdateItemResponse(
-            name=product.name,
-            price=product.price,
-            stock=product.stock,
-            soldout=product.soldout
+            name=stock.name,
+            price=stock.price,
+            stock=stock.stock,
+            soldout=stock.soldout
         )
 
     def remove_item(self, name: str) -> None:
