@@ -69,6 +69,10 @@ class OrderQueryResponse(BaseModel):
     items: List[OrderItemQueryResponse]
 
 
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
+    cancel_reason: Optional[str] = Field(default=None, max_length=200)
+
 
 __all__ = [
     "OrderCreate",
@@ -77,5 +81,6 @@ __all__ = [
     "ProcessedItemData",
     "ProcessedItemsResult",
     "OrderQueryResponse",
-    "OrderItemQueryResponse"
+    "OrderItemQueryResponse",
+    "OrderStatusUpdate"
 ]
