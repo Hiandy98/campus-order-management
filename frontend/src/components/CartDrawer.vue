@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue'
 import type { Stock } from '../api'
 
 const props = defineProps<{
@@ -12,10 +13,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:isOpen', value: boolean): void
   (e: 'checkout'): void
+  (e: 'clear'): void
 }>()
+
+const isConfirmingClear = ref(false)
 
 const getPrice = (name: string) => {
   return props.stocks.find((s) => s.name === name)?.price || 0
+}
+
+const handleClear = () => {
+  emit('clear')
+  isConfirmingClear.value = false
+  emit('update:isOpen', false)
 }
 </script>
 
@@ -85,7 +95,34 @@ const getPrice = (name: string) => {
             </span>
           </div>
 
-          <div class="mt-4 pt-2">
+          <div class="mt-4 flex flex-col gap-4 pt-2">
+            
+            <div class="flex min-h-8 items-center justify-end">
+              <button 
+                v-if="!isConfirmingClear"
+                @click="isConfirmingClear = true"
+                class="text-sm font-medium text-ink-mute transition-colors hover:text-danger"
+              >
+                清空購物車
+              </button>
+
+              <div v-else class="flex items-center gap-3">
+                <span class="text-sm font-bold text-danger">確定要清空嗎？</span>
+                <button 
+                  @click="isConfirmingClear = false"
+                  class="rounded-lg px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-black/5"
+                >
+                  取消
+                </button>
+                <button 
+                  @click="handleClear"
+                  class="rounded-lg bg-danger px-4 py-1.5 text-sm font-bold text-white shadow-sm active:scale-95"
+                >
+                  確定清空
+                </button>
+              </div>
+            </div>
+
             <button 
               @click="emit('checkout')"
               class="w-full rounded-xl bg-brand py-4 text-lg font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.98]"
@@ -93,6 +130,7 @@ const getPrice = (name: string) => {
               確認送出 · ${{ totalPrice }}
             </button>
           </div>
+
         </div>
       </div>
     </div>

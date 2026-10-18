@@ -55,6 +55,14 @@ const handleCheckout = () => {
   alert('準備送出訂單 下一階段接 API')
   isCartOpen.value = false
 }
+
+const clearCart = () => {
+  Object.keys(cart).forEach((key) => {
+    cart[key] = 0
+    delete cart[key]
+  })
+}
+
 </script>
 
 <template>
@@ -95,6 +103,8 @@ const handleCheckout = () => {
       :total-count="cartTotalCount"
       :total-price="cartTotalPrice"
       @checkout="handleCheckout"
+      @clear="clearCart"
     />
+
   </PageLayout>
 </template>
