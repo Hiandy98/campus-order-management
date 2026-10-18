@@ -2,7 +2,9 @@ from app.interfaces.order_service import IOrderService
 from app.repositories import OrderRepository, StockRespository
 from app.core.exceptions import NotFoundError, SoldoutError
 from app.models import Order, OrderItem, Stock
+from app.models.order_status import OrderStatus
 from app.schemas.order import *
+from app.schemas.order import OrderQueryResponse
 
 
 class OrderService(IOrderService):
@@ -92,8 +94,38 @@ class OrderService(IOrderService):
         self._order_repository.refresh(saved_order)
         return saved_order
 
-    def get_orders(self) -> ...:
-        ...
+    def get_orders(self, status: str | None = None) -> list[OrderQueryResponse]:
+        all_orders = self._order_repository.get_all_with_items()
+        
+        target_statuses = self._parse_status_param(status)
+        
+        filtered_orders = self._filter_orders_by_statuses(all_orders, target_statuses)
+        
+        sorted_orders = self._sort_orders_by_business_rules(filtered_orders, target_statuses)
+        
+        return self._to_query_responses(sorted_orders)
+
+    def _parse_status_param(self, status: str | None = None) -> list[str]:
+        if not status:
+            return []
+        return [s.strip() for s in status.split(",") if s.strip()]
+
+    def _filter_orders_by_statuses(self, orders: list[Order], statuses: list[str]) -> list[Order]:
+        if not statuses:
+             return orders
+        return [o for o in orders if o.status in statuses]
+
+    def _sort_orders_by_business_rules(self, orders: list[Order], statuses: list[str]) -> list[Order]:
+        if statuses == [OrderStatus.READY]:
+            return sorted(
+                orders, 
+                key=lambda o: o.ready_at if o.ready_at is not None else o.created_at
+            )
+        return sorted(orders, key=lambda o: o.created_at)
+
+    def _to_query_responses(self, orders: list[Order]) -> list[OrderQueryResponse]:
+        return [OrderQueryResponse.model_validate(order) for order in orders]
+
     
     def get_specific_order(self) -> ...:
         ...
