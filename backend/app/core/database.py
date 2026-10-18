@@ -1,9 +1,7 @@
 from loguru import logger
 from typing import Generator
 
-from sqlmodel import SQLModel
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
+from sqlmodel import SQLModel, create_engine, Session
 
 from app.core.config import settings
 from app.models import *
@@ -19,6 +17,7 @@ engine = create_engine(
     pool_pre_ping=True
 )
 
+from sqlalchemy.orm import sessionmaker
 SessionLocal = sessionmaker(
     bind=engine,
     class_=Session,
