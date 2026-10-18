@@ -1,10 +1,15 @@
+from datetime import datetime
+from pydantic import NaiveDatetime
+
 from app.interfaces.order_service import IOrderService
 from app.repositories import OrderRepository, StockRespository
-from app.core.exceptions import NotFoundError, SoldoutError
+from app.core.exceptions import NotFoundError, SoldoutError, InvalidStatusTransitionError
 from app.models import Order, OrderItem, Stock
 from app.models.order_status import OrderStatus
-from app.schemas.order import *
-from app.schemas.order import OrderQueryResponse
+from app.schemas.order import (
+        OrderCreate, OrderResponse, OrderItemCreateRequest, 
+        OrderQueryResponse, ProcessedItemsResult, ProcessedItemData, OrderStatusUpdate
+    )
 
 
 class OrderService(IOrderService):
@@ -129,5 +134,49 @@ class OrderService(IOrderService):
     def get_specific_order(self) -> ...:
         ...
 
-    def change_status(self) -> ...:
-        ...
+    def change_status(self, order_id: int, command: OrderStatusUpdate) -> OrderResponse:
+        order = self._get_order_for_update(order_id)
+        self._validate_status_transition(order, command)
+
+        update_fields = self._build_status_update_fields(command)
+        self._order_repository.update_partial(order, update_fields)
+
+        return OrderResponse.model_validate(order)
+
+    def _get_order_for_update(self, order_id: int) -> Order:
+        order = self._order_repository.get_by_id_for_update(order_id)
+        if order is None:
+            raise NotFoundError(f"訂單 {order_id} 不存在")
+        return order
+
+    def _validate_status_transition(
+        self, order: Order, command: OrderStatusUpdate
+    ) -> None:
+        current = order.status
+        target = command.status
+
+        if not current.can_transition_to(target):
+            raise InvalidStatusTransitionError(
+                f"非法狀態轉移：{current.value} → {target.value}"
+            )
+
+        if target == OrderStatus.CANCELLED and not command.cancel_reason:
+            raise InvalidStatusTransitionError("取消訂單必須提供 cancel_reason")
+
+    def _build_status_update_fields(
+        self, command: OrderStatusUpdate
+    ) -> dict:
+        now: NaiveDatetime = datetime.now()
+        target = command.status
+
+        update: dict = {"status": target}
+
+        if target == OrderStatus.READY:
+            update["ready_at"] = now
+        elif target == OrderStatus.COMPLETED:
+            update["completed_at"] = now
+        elif target == OrderStatus.CANCELLED:
+            update["cancelled_at"] = now
+            update["cancel_reason"] = command.cancel_reason
+
+        return update
