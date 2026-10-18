@@ -34,16 +34,32 @@ class OrderService(IOrderService):
 
     def _process_single_item(self, item_req: OrderItemCreateRequest) -> ProcessedItemData:
         stock = self._get_and_validate_stock(item_req.name)
-        deduct_qty = min(item_req.quantity, stock.stock)
         
-        stock.stock -= deduct_qty
-        self._stock_repository.update_partial(stock, {"stock": stock.stock})
+        self._validate_stock_availability(stock, item_req.quantity)
+        
+        self._deduct_and_update_stock(stock, item_req.quantity)
         
         return ProcessedItemData(
-            price=stock.price * deduct_qty,
-            summary=f"{item_req.name}x{deduct_qty}",
-            order_item=self._create_item_obj(item_req.name, stock.price, deduct_qty)
+            price=stock.price * item_req.quantity,
+            summary=f"{item_req.name}x{item_req.quantity}",
+            order_item=self._create_item_obj(item_req.name, stock.price, item_req.quantity)
         )
+
+    def _validate_stock_availability(self, stock: Stock, quantity: int) -> None:
+        if quantity > stock.stock:
+            raise SoldoutError(f"{stock.name} 餘量不足，剩餘庫存: {stock.stock}")
+
+    def _deduct_and_update_stock(self, stock: Stock, quantity: int) -> None:
+        stock.stock -= quantity
+        
+        update_fields = {"stock": stock.stock}
+        if self._is_soldout(stock.stock):
+            update_fields["soldout"] = True
+            
+        self._stock_repository.update_partial(stock, update_fields)
+
+    def _is_soldout(self, stock: int) -> bool:
+        return stock <= 0
 
     def _get_and_validate_stock(self, name: str) -> Stock:
         stock = self._stock_repository.find_by_name_for_update(name)
@@ -77,7 +93,7 @@ class OrderService(IOrderService):
         return saved_order
 
     def get_orders(self) -> ...:
-            ...
+        ...
     
     def get_specific_order(self) -> ...:
         ...
