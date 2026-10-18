@@ -8,6 +8,7 @@ const props = defineProps<{
   totalCount: number
   totalPrice: number
   isOpen: boolean
+  isCheckingOut?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -124,10 +125,11 @@ const handleClear = () => {
             </div>
 
             <button 
-              @click="emit('checkout')"
-              class="w-full rounded-xl bg-brand py-4 text-lg font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.98]"
+              @click="!isCheckingOut && emit('checkout')"
+              :disabled="isCheckingOut"
+              class="w-full rounded-xl bg-brand py-4 text-lg font-bold text-white shadow-sm transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              確認送出 · ${{ totalPrice }}
+              {{ isCheckingOut ? '處理中...' : `確認送出 · $${totalPrice}` }}
             </button>
           </div>
 

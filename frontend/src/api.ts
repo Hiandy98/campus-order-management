@@ -9,7 +9,7 @@ export interface Stock {
 
 export interface OrderItem {
   name: string
-  qty: number
+  quantity: number
 }
 
 export interface Order {

@@ -7,6 +7,7 @@ import PageLayout from '../components/PageLayout.vue'
 import PageHeader from '../components/PageHeader.vue'
 import StockItemCard from '../components/StockItemCard.vue'
 import CartDrawer from '../components/CartDrawer.vue'
+import SuccessModal from '../components/SuccessModal.vue'
 
 const stocks = ref<Stock[]>([])
 const isLoading = ref(true)
@@ -14,6 +15,10 @@ const errorMsg = ref('')
 
 const cart = reactive<Record<string, number>>({})
 const isCartOpen = ref(false)
+
+const isCheckingOut = ref(false)
+const isSuccessModalOpen = ref(false)
+const lastPickupNo = ref<number | string | null>(null)
 
 const cartTotalCount = computed(() => Object.values(cart).reduce((a, b) => a + b, 0))
 const cartTotalPrice = computed(() => {
@@ -50,12 +55,6 @@ const removeFromCart = (item: Stock) => {
   }
 }
 
-const handleCheckout = () => {
-  if (cartTotalCount.value === 0) return
-  alert('準備送出訂單 下一階段接 API')
-  isCartOpen.value = false
-}
-
 const clearCart = () => {
   Object.keys(cart).forEach((key) => {
     cart[key] = 0
@@ -63,6 +62,30 @@ const clearCart = () => {
   })
 }
 
+const handleCheckout = async () => {
+  if (cartTotalCount.value === 0 || isCheckingOut.value) return
+  
+  isCheckingOut.value = true
+  try {
+    const items = Object.entries(cart)
+      .filter(([_, quantity]) => quantity > 0)
+      .map(([name, quantity]) => ({ name, quantity }))
+
+    const order = await api.createOrder(items)
+
+    lastPickupNo.value = order.pickup_no
+    isCartOpen.value = false
+    clearCart()
+    fetchStocks()
+    
+    isSuccessModalOpen.value = true
+
+  } catch (e: any) {
+    alert(`送出失敗：${e.message}`)
+  } finally {
+    isCheckingOut.value = false
+  }
+}
 </script>
 
 <template>
@@ -104,6 +127,12 @@ const clearCart = () => {
       :total-price="cartTotalPrice"
       @checkout="handleCheckout"
       @clear="clearCart"
+    />
+
+    <SuccessModal
+      :is-open="isSuccessModalOpen"
+      :pickup-no="lastPickupNo"
+      @close="isSuccessModalOpen = false"
     />
 
   </PageLayout>
