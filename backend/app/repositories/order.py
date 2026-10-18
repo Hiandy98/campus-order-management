@@ -31,3 +31,19 @@ class OrderRepository:
         )
         result = self._db.exec(statement)
         return list(result.all())
+
+    def get_by_id_for_update(self, order_id: int) -> Order | None:
+        statement = (
+            select(Order)
+            .where(Order.id == order_id)
+            .options(selectinload(cast(Any, Order.items)))
+            .with_for_update()
+        )
+        return self._db.exec(statement).first()
+
+    def update_partial(self, existing_order: Order, update_data: dict) -> Order:
+        existing_order.sqlmodel_update(update_data)
+        self._db.add(existing_order)
+        self._db.flush()
+        self._db.refresh(existing_order)
+        return existing_order
