@@ -1,11 +1,31 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
-app = FastAPI()
+from app.core.database import create_db_and_tables
+from app.core.global_exception_handler import GlobalExceptionHandler
+from app.routers import router
 
-@app.get("/")
-def read_root():
-    return {"status": "FastAPI is running!"}
 
-@app.get("/api/v1/health/liveness")
-def liveness_check():
-    return {"status": "ok"}
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    create_db_and_tables() 
+    #...
+    yield
+    #...
+    pass
+
+
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Campus order manager backend",
+        lifespan=lifespan
+    )
+    
+    app.include_router(router)
+    
+    GlobalExceptionHandler(app)
+    
+    return app
+
+
+app = create_app()
