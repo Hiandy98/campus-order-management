@@ -5,13 +5,15 @@ import { api, type Stock } from '../api'
 import { usePolling } from '../usePolling'
 import PageLayout from '../components/PageLayout.vue'
 import PageHeader from '../components/PageHeader.vue'
-import StockItemCard from '../components/StockItemCard.vue' 
+import StockItemCard from '../components/StockItemCard.vue'
+import CartDrawer from '../components/CartDrawer.vue'
 
 const stocks = ref<Stock[]>([])
 const isLoading = ref(true)
 const errorMsg = ref('')
 
 const cart = reactive<Record<string, number>>({})
+const isCartOpen = ref(false)
 
 const cartTotalCount = computed(() => Object.values(cart).reduce((a, b) => a + b, 0))
 const cartTotalPrice = computed(() => {
@@ -47,6 +49,12 @@ const removeFromCart = (item: Stock) => {
     cart[item.name] = currentQty - 1
   }
 }
+
+const handleCheckout = () => {
+  if (cartTotalCount.value === 0) return
+  alert('準備送出訂單 下一階段接 API')
+  isCartOpen.value = false
+}
 </script>
 
 <template>
@@ -79,6 +87,14 @@ const removeFromCart = (item: Stock) => {
         />
       </div>
     </main>
-    
+
+    <CartDrawer
+      v-model:is-open="isCartOpen"
+      :cart="cart"
+      :stocks="stocks"
+      :total-count="cartTotalCount"
+      :total-price="cartTotalPrice"
+      @checkout="handleCheckout"
+    />
   </PageLayout>
 </template>
