@@ -12,14 +12,15 @@ const orders = ref<Order[]>([])
 const isLoading = ref(true)
 const errorMsg = ref('')
 
-const { playNewOrder } = useSound()
+const otherActions = ref<{ id: number; pickup_no: string }[]>([])
+
+const { playNewOrder, playAlert } = useSound()
 
 const isCancelSheetOpen = ref(false)
 const targetOrderId = ref<number | null>(null)
 const CANCEL_REASONS = ['客人跑了', '餐點做錯', '食材沒了', '其他']
 
 let previousIds = new Set<number>()
-
 const processingIds = new Set<number>()
 
 const fetchOrders = async () => {
@@ -27,13 +28,27 @@ const fetchOrders = async () => {
     const data = await api.listOrders('pending')
     
     const filteredData = data.filter(o => !processingIds.has(o.id))
-    
     filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
     if (!isLoading.value) {
       const currentIds = new Set(filteredData.map((o) => o.id))
+      
       const hasNew = filteredData.some((o) => !previousIds.has(o.id))
       if (hasNew && previousIds.size > 0) playNewOrder()
+
+      const removedOrders = orders.value.filter(
+        (o) => !currentIds.has(o.id) && !processingIds.has(o.id)
+      )
+      
+      if (removedOrders.length > 0) {
+        removedOrders.forEach((o) => {
+          if (!otherActions.value.some(a => a.id === o.id)) {
+            otherActions.value.push({ id: o.id, pickup_no: String(o.pickup_no) })
+          }
+        })
+        playAlert()
+      }
+
       previousIds = currentIds
     } else {
       previousIds = new Set(filteredData.map((o) => o.id))
@@ -49,6 +64,10 @@ const fetchOrders = async () => {
 }
 
 usePolling(fetchOrders, 2000)
+
+const dismissAction = (id: number) => {
+  otherActions.value = otherActions.value.filter(a => a.id !== id)
+}
 
 const optimisticRemove = (id: number) => {
   processingIds.add(id)
@@ -72,6 +91,7 @@ const handleComplete = async (order: Order) => {
   try {
     await api.updateStatus(order.id, { status: 'ready' })
   } catch (e: any) {
+    if (e.status === 400) return
     alert(`更新失敗：${e.message}`)
     restoreOrder(order)
   }
@@ -93,6 +113,7 @@ const confirmCancel = async (reason: string) => {
   try {
     await api.updateStatus(order.id, { status: 'cancelled', cancel_reason: reason })
   } catch (e: any) {
+    if (e.status === 400) return
     alert(`取消失敗：${e.message}`)
     restoreOrder(order)
   }
@@ -115,10 +136,31 @@ const pendingCount = computed(() => orders.value.length)
     </PageHeader>
 
     <main class="mt-8 flex-1">
+      
+      <div v-if="otherActions.length > 0" class="mb-6 flex flex-col gap-2">
+        <p class="eyebrow text-ink-mute">系統通知 (已由其他設備處理)</p>
+        <div 
+          v-for="action in otherActions" 
+          :key="action.id"
+          class="flex items-center justify-between rounded-xl border border-line bg-gray-100 p-4"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-lg font-bold text-ink-mute">#{{ action.pickup_no }}</span>
+            <span class="text-sm font-medium text-ink-mute">已由其他人完成或取消</span>
+          </div>
+          <button 
+            @click="dismissAction(action.id)"
+            class="rounded-lg bg-surface border border-line px-3 py-1.5 text-sm font-bold text-ink-soft shadow-sm active:scale-95"
+          >
+            我知道了
+          </button>
+        </div>
+      </div>
+
       <p v-if="isLoading && orders.length === 0" class="text-ink-mute animate-pulse">載入訂單中...</p>
       <p v-else-if="errorMsg" class="text-danger">{{ errorMsg }}</p>
 
-      <div v-else-if="orders.length === 0" class="py-20 text-center">
+      <div v-else-if="orders.length === 0 && otherActions.length === 0" class="py-20 text-center">
         <p class="text-2xl font-bold text-ink-mute/50">目前沒有待處理訂單</p>
         <p class="mt-2 text-sm text-ink-mute">新訂單會自動出現在這裡</p>
       </div>

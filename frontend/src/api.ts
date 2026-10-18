@@ -30,8 +30,11 @@ async function req<T = unknown>(path: string, options: RequestInit = {}): Promis
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({} as any))
-    throw new Error(err?.detail || `系統錯誤 (${res.status})`)
+    const error = new Error(err?.detail || `系統錯誤 (${res.status})`) as any
+    error.status = res.status
+    throw error
   }
+
 
   if (res.status === 204) return undefined as T
 

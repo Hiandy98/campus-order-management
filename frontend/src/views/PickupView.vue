@@ -15,10 +15,6 @@ const errorMsg = ref('')
 
 const { playNewOrder, playAlert } = useSound()
 
-const isCancelSheetOpen = ref(false)
-const targetOrderId = ref<number | null>(null)
-const CANCEL_REASONS = ['客人跑了', '餐點做錯', '食材沒了', '其他']
-
 const HIDDEN_KEY = 'pos_hidden_cancelled_ids'
 let hiddenIds = new Set<number>(JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]'))
 
@@ -97,27 +93,18 @@ const handleComplete = async (order: Order) => {
   try {
     await api.updateStatus(order.id, { status: 'completed' })
   } catch (e: any) {
+    if (e.status === 400) return
     alert(`更新失敗：${e.message}`)
     restoreOrder(order)
   }
 }
 
-const openCancelSheet = (order: Order) => {
-  targetOrderId.value = order.id
-  isCancelSheetOpen.value = true
-}
-
-const confirmCancel = async (reason: string) => {
-  if (targetOrderId.value === null) return
-  const order = readyOrders.value.find((o) => o.id === targetOrderId.value)
-  if (!order) return
-
-  isCancelSheetOpen.value = false
+const handleCancelDirectly = async (order: Order) => {
   optimisticRemove(order.id)
-
   try {
-    await api.updateStatus(order.id, { status: 'cancelled', cancel_reason: reason })
+    await api.updateStatus(order.id, { status: 'cancelled', cancel_reason: '取餐區取消' })
   } catch (e: any) {
+    if (e.status === 400) return
     alert(`取消失敗：${e.message}`)
     restoreOrder(order)
   }
@@ -176,44 +163,10 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
             :order="order"
             complete-label="客人取餐"
             @complete="handleComplete(order)"
-            @cancel="openCancelSheet(order)"
+            @cancel="handleCancelDirectly(order)"
           />
         </div>
       </div>
     </main>
-
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div v-if="isCancelSheetOpen" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-        <div @click="isCancelSheetOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div class="relative w-full max-w-md rounded-t-2xl bg-surface p-5 shadow-xl sm:rounded-2xl">
-          <h3 class="mb-4 text-center text-lg font-bold text-ink">取消原因</h3>
-          <div class="flex flex-col gap-2">
-            <button
-              v-for="reason in CANCEL_REASONS"
-              :key="reason"
-              @click="confirmCancel(reason)"
-              class="w-full rounded-xl py-3.5 text-base font-medium text-ink-soft transition-colors hover:bg-black/5 active:bg-black/10"
-            >
-              {{ reason }}
-            </button>
-          </div>
-          <div class="mt-4 pt-4 border-t border-line">
-            <button
-              @click="isCancelSheetOpen = false"
-              class="w-full rounded-xl py-3.5 text-base font-bold text-ink-mute transition-colors hover:bg-black/5"
-            >
-              返回
-            </button>
-          </div>
-        </div>
-      </div>
-    </Transition>
   </PageLayout>
-</template>
+</template>ㄋ
