@@ -22,8 +22,6 @@ export interface Order {
   cancel_reason?: string | null
 }
 
-export type CancelReason = '客人跑了' | '餐點做錯' | '食材沒了' | '其他'
-
 async function req<T = unknown>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(BASE + path, {
     headers: { 'Content-Type': 'application/json' },
@@ -43,6 +41,7 @@ async function req<T = unknown>(path: string, options: RequestInit = {}): Promis
 
 export const api = {
   getStocks: () => req<Stock[]>('/stock'),
+  
   updateStock: (name: string, patch: Partial<Pick<Stock, 'stock' | 'soldout'>>) =>
     req(`/stock/${encodeURIComponent(name)}`, {
       method: 'PATCH',
@@ -57,8 +56,8 @@ export const api = {
 
   listOrders: (status: Order['status']) => req<Order[]>(`/orders?status=${status}`),
 
-  updateStatus: (id: number, body: { status: Order['status']; cancel_reason?: CancelReason }) =>
-    req(`/orders/${id}/status`, {
+  updateStatus: (id: number, body: { status: Order['status']; cancel_reason?: string }) =>
+    req<Order>(`/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify(body),
     }),

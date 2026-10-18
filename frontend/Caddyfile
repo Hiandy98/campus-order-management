@@ -1,0 +1,19 @@
+:80 {
+    handle /api/* {
+        reverse_proxy http://backend:8000
+    }
+
+    handle /docs* {
+        reverse_proxy http://backend:8000
+    }
+
+    handle /openapi.json {
+        reverse_proxy http://backend:8000
+    }
+
+    handle {
+        root * /srv
+        try_files {path} /index.html
+        file_server
+    }
+}

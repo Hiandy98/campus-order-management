@@ -5,8 +5,6 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: campus-order-management-backend
-    ports:
-      - "8000:8000"
     volumes:
       - ./backend:/app
       - /app/.venv
@@ -20,8 +18,22 @@ services:
       retries: 3
       start_period: 5s
     networks:
-      - kspgc-network
+      - campus-order-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: campus-order-management-frontend
+    ports:
+      - "6677:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    networks:
+      - campus-order-network
 
 networks:
-  kspgc-network:
+  campus-order-network:
     driver: bridge

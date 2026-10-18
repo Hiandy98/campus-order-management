@@ -33,15 +33,15 @@ onMounted(async () => {
 
 const moveUp = (index: number) => {
   if (index === 0) return
-  const temp = localStocks.value[index]
-  localStocks.value[index] = localStocks.value[index - 1]
+  const temp = localStocks.value[index]!
+  localStocks.value[index] = localStocks.value[index - 1]!
   localStocks.value[index - 1] = temp
 }
 
 const moveDown = (index: number) => {
   if (index === localStocks.value.length - 1) return
-  const temp = localStocks.value[index]
-  localStocks.value[index] = localStocks.value[index + 1]
+  const temp = localStocks.value[index]!
+  localStocks.value[index] = localStocks.value[index + 1]!
   localStocks.value[index + 1] = temp
 }
 
