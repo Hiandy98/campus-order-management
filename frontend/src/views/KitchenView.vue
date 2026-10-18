@@ -48,9 +48,10 @@ const fetchOrders = async () => {
   }
 }
 
+usePolling(fetchOrders, 2000)
+
 const optimisticRemove = (id: number) => {
   processingIds.add(id)
-  
   const index = orders.value.findIndex((o) => o.id === id)
   if (index === -1) return null
   const removed = orders.value[index]
@@ -61,24 +62,6 @@ const optimisticRemove = (id: number) => {
 
 const restoreOrder = (order: Order) => {
   processingIds.delete(order.id)
-  
-  orders.value.push(order)
-  orders.value.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-  previousIds.add(order.id)
-}
-
-usePolling(fetchOrders, 2000)
-
-const optimisticRemove = (id: number) => {
-  const index = orders.value.findIndex((o) => o.id === id)
-  if (index === -1) return null
-  const removed = orders.value[index]
-  orders.value.splice(index, 1)
-  previousIds.delete(id)
-  return removed
-}
-
-const restoreOrder = (order: Order) => {
   orders.value.push(order)
   orders.value.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
   previousIds.add(order.id)

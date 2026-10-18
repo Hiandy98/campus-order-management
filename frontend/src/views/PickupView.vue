@@ -67,9 +67,16 @@ const fetchOrders = async () => {
   }
 }
 
+usePolling(fetchOrders, 3000)
+
+const hideCancelledOrder = (id: number) => {
+  hiddenIds.add(id)
+  localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(hiddenIds)))
+  cancelledOrders.value = cancelledOrders.value.filter((o) => o.id !== id)
+}
+
 const optimisticRemove = (id: number) => {
   processingIds.add(id)
-
   const index = readyOrders.value.findIndex((o) => o.id === id)
   if (index === -1) return null
   const removed = readyOrders.value[index]
@@ -80,30 +87,6 @@ const optimisticRemove = (id: number) => {
 
 const restoreOrder = (order: Order) => {
   processingIds.delete(order.id)
-  
-  readyOrders.value.push(order)
-  readyOrders.value.sort((a, b) => new Date(a.ready_at || a.created_at).getTime() - new Date(b.ready_at || b.created_at).getTime())
-  previousReadyIds.add(order.id)
-}
-
-usePolling(fetchOrders, 3000)
-
-const hideCancelledOrder = (id: number) => {
-  hiddenIds.add(id)
-  localStorage.setItem(HIDDEN_KEY, JSON.stringify(Array.from(hiddenIds)))
-  cancelledOrders.value = cancelledOrders.value.filter((o) => o.id !== id)
-}
-
-const optimisticRemove = (id: number) => {
-  const index = readyOrders.value.findIndex((o) => o.id === id)
-  if (index === -1) return null
-  const removed = readyOrders.value[index]
-  readyOrders.value.splice(index, 1)
-  previousReadyIds.delete(id)
-  return removed
-}
-
-const restoreOrder = (order: Order) => {
   readyOrders.value.push(order)
   readyOrders.value.sort((a, b) => new Date(a.ready_at || a.created_at).getTime() - new Date(b.ready_at || b.created_at).getTime())
   previousReadyIds.add(order.id)
@@ -166,7 +149,6 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
       </div>
 
       <div v-else class="flex flex-col gap-6">
-        
         <div v-if="cancelledOrders.length > 0" class="flex flex-col gap-3">
           <p class="eyebrow text-danger">已取消 (請確認)</p>
           <div 
@@ -197,7 +179,6 @@ const totalCount = computed(() => readyOrders.value.length + cancelledOrders.val
             @cancel="openCancelSheet(order)"
           />
         </div>
-
       </div>
     </main>
 
