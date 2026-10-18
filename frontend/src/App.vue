@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
+import { useWakeLock } from './composables/useWakeLock'
+
+useWakeLock()
 
 const isOnline = ref(navigator.onLine)
 
