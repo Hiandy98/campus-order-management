@@ -42,9 +42,9 @@ async function req<T = unknown>(path: string, options: RequestInit = {}): Promis
 }
 
 export const api = {
-  getStocks: () => req<Stock[]>('/stocks'),
+  getStocks: () => req<Stock[]>('/stock'),
   updateStock: (name: string, patch: Partial<Pick<Stock, 'stock' | 'soldout'>>) =>
-    req(`/stocks/${encodeURIComponent(name)}`, {
+    req(`/stock/${encodeURIComponent(name)}`, {
       method: 'PATCH',
       body: JSON.stringify(patch),
     }),
