@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { RouterLink } from 'vue-router'
-import { api, type Order, type CancelReason } from '../api'
+import { api, type Order } from '../api'
 import { usePolling } from '../usePolling'
+import { useSound } from '../composables/useSound'
 import PageLayout from '../components/PageLayout.vue'
 import PageHeader from '../components/PageHeader.vue'
 import OrderCard from '../components/OrderCard.vue'
@@ -11,15 +12,33 @@ const orders = ref<Order[]>([])
 const isLoading = ref(true)
 const errorMsg = ref('')
 
+const { playNewOrder } = useSound()
+
 const isCancelSheetOpen = ref(false)
 const targetOrderId = ref<number | null>(null)
+const CANCEL_REASONS = ['客人跑了', '餐點做錯', '食材沒了', '其他']
 
-const CANCEL_REASONS: CancelReason[] = ['客人跑了', '餐點做錯', '食材沒了', '其他']
+let previousIds = new Set<number>()
 
 const fetchOrders = async () => {
   try {
     const data = await api.listOrders('pending')
+    
     data.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+    if (!isLoading.value) {
+      const currentIds = new Set(data.map((o) => o.id))
+      
+      const hasNew = data.some((o) => !previousIds.has(o.id))
+      if (hasNew && previousIds.size > 0) {
+        playNewOrder()
+      }
+      
+      previousIds = currentIds
+    } else {
+      previousIds = new Set(data.map((o) => o.id))
+    }
+
     orders.value = data
     errorMsg.value = ''
   } catch (e: any) {
@@ -36,12 +55,14 @@ const optimisticRemove = (id: number) => {
   if (index === -1) return null
   const removed = orders.value[index]
   orders.value.splice(index, 1)
+  previousIds.delete(id)
   return removed
 }
 
 const restoreOrder = (order: Order) => {
   orders.value.push(order)
   orders.value.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  previousIds.add(order.id)
 }
 
 const handleComplete = async (order: Order) => {
@@ -59,7 +80,7 @@ const openCancelSheet = (order: Order) => {
   isCancelSheetOpen.value = true
 }
 
-const confirmCancel = async (reason: CancelReason) => {
+const confirmCancel = async (reason: string) => {
   if (targetOrderId.value === null) return
   const order = orders.value.find((o) => o.id === targetOrderId.value)
   if (!order) return
@@ -122,10 +143,8 @@ const pendingCount = computed(() => orders.value.length)
     >
       <div v-if="isCancelSheetOpen" class="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
         <div @click="isCancelSheetOpen = false" class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-
         <div class="relative w-full max-w-md rounded-t-2xl bg-surface p-5 shadow-xl sm:rounded-2xl">
           <h3 class="mb-4 text-center text-lg font-bold text-ink">取消原因</h3>
-          
           <div class="flex flex-col gap-2">
             <button
               v-for="reason in CANCEL_REASONS"
@@ -136,7 +155,6 @@ const pendingCount = computed(() => orders.value.length)
               {{ reason }}
             </button>
           </div>
-
           <div class="mt-4 pt-4 border-t border-line">
             <button
               @click="isCancelSheetOpen = false"
