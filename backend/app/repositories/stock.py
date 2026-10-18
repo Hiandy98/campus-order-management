@@ -15,6 +15,10 @@ class StockRespository:
     def commit(self) -> None:
         self._db.commit()
 
+    def refresh(self, product: Product):
+        stock = Stock.model_validate(product.model_dump())
+        self._db.refresh(stock)
+
     def exists_by_name(self, name: str) -> bool:
         return self._db.query(Stock).filter(col(Stock.name) == name).first() is not None
 

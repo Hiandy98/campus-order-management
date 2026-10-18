@@ -27,8 +27,8 @@ class StockService(IStockService):
         product_schema = self._to_product_schema(command)
 
         saved_product = self._stock_repository.create(product=product_schema)
-
-        self._stock_repository.commit()
+        
+        self._stock_repository.refresh(saved_product)
 
         return self._to_add_item_response(saved_product)
 
@@ -57,7 +57,7 @@ class StockService(IStockService):
             update_data=processed_data
         )
 
-        self._stock_repository.commit()
+        self._stock_repository.refresh(updated_product)
         
         return self._to_update_item_response(updated_product)
 
@@ -89,4 +89,3 @@ class StockService(IStockService):
     def remove_item(self, name: str) -> None:
         existing_stock = self._get_existing_stock_or_raise(name)
         self._stock_repository.remove(existing_stock)
-        self._stock_repository.commit()
