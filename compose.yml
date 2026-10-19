@@ -26,7 +26,7 @@ services:
       dockerfile: Dockerfile
     container_name: campus-order-management-frontend
     ports:
-      - "6677:80"
+      - "8081:80"
     depends_on:
       backend:
         condition: service_healthy

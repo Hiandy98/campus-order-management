@@ -31,7 +31,7 @@ const handleClear = () => {
 </script>
 
 <template>
-  <div class="fixed bottom-0 left-0 right-0 z-40">
+  <div class="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
     
     <Transition
       enter-active-class="transition-opacity duration-300"
@@ -44,12 +44,12 @@ const handleClear = () => {
       <div 
         v-if="isOpen" 
         @click="emit('update:isOpen', false)"
-        class="fixed inset-0 bg-black/20 backdrop-blur-sm"
+        class="fixed inset-0 bg-black/20 backdrop-blur-sm pointer-events-auto"
       ></div>
     </Transition>
 
     <div 
-      class="relative mx-auto w-full max-w-3xl bg-surface border-t border-line shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-transform duration-300 ease-in-out"
+      class="relative mx-auto w-full max-w-3xl bg-surface border-t border-line shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-transform duration-300 ease-in-out pointer-events-auto"
       :class="isOpen ? 'translate-y-0' : 'translate-y-[calc(100%-72px)]'"
     >
       <div 
