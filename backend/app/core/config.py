@@ -6,6 +6,7 @@ from pydantic import Field, model_validator, computed_field
 
 class Settings(BaseSettings):
     raw_database_url: str | None = Field(default=None, validation_alias="db_url", repr=False)
+    app_env: str = Field(default="development", validation_alias="app_env")
     # another config or environmental variables...
 
     model_config = SettingsConfigDict(
@@ -25,6 +26,11 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         assert self.raw_database_url is not None
         return self.raw_database_url
+
+    @computed_field
+    @property
+    def is_development(self) -> bool:
+        return self.app_env.lower() in ("development", "dev")
 
 
 settings = Settings()

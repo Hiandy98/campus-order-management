@@ -3,7 +3,7 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: campus-order-management-backend
     volumes:
       - ./backend:/app
