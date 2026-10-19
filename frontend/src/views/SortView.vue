@@ -6,6 +6,7 @@ import PageHeader from '../components/PageHeader.vue'
 import { RouterLink } from 'vue-router'
 
 const STORAGE_KEY = 'pos_custom_order'
+const HIDDEN_KEY = 'pos_hidden_cancelled_ids'
 
 const localStocks = ref<Stock[]>([])
 const isLoading = ref(true)
@@ -56,6 +57,16 @@ const saveOrder = () => {
     setTimeout(() => (saveSuccess.value = false), 2000)
   }, 300)
 }
+
+const resetLocalData = () => {
+  if (confirm('確定要清除所有本機暫存嗎？（包含自訂排序與隱藏的取消訂單）')) {
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(HIDDEN_KEY)
+    alert('已清除本地資料，網頁將重新整理。')
+    window.location.reload()
+  }
+}
+
 </script>
 
 <template>
@@ -108,6 +119,18 @@ const saveOrder = () => {
           </button>
         </div>
       </div>
+
+      <div class="mt-16 pt-8 border-t border-line/50">
+        <p class="eyebrow text-danger mb-4">危險區域 (系統管理)</p>
+        <button 
+          @click="resetLocalData"
+          class="w-full rounded-xl border border-red-200 bg-red-50 py-3 text-sm font-bold text-red-600 transition-colors hover:bg-red-100 active:scale-[0.98]"
+        >
+          清除本機暫存 (重置隱藏訂單與排序)
+        </button>
+        <p class="mt-2 text-xs text-ink-mute text-center">活動正式開始前，或測試資料清空後，請按此按鈕重置。</p>
+      </div>
+      
     </main>
   </PageLayout>
 </template>
