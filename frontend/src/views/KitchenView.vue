@@ -12,7 +12,7 @@ const orders = ref<Order[]>([])
 const isLoading = ref(true)
 const errorMsg = ref('')
 
-const otherActions = ref<{ id: number; pickup_no: string }[]>([])
+const otherActions = ref<{ id: number; pickup_no: string; reason: string }[]>([])
 
 const { playNewOrder, playAlert } = useSound()
 
@@ -25,9 +25,12 @@ const processingIds = new Set<number>()
 
 const fetchOrders = async () => {
   try {
-    const data = await api.listOrders('pending')
+    const [pendingData, cancelledData] = await Promise.all([
+      api.listOrders('pending'),
+      api.listOrders('cancelled')
+    ])
     
-    const filteredData = data.filter(o => !processingIds.has(o.id))
+    const filteredData = pendingData.filter(o => !processingIds.has(o.id))
     filteredData.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
     if (!isLoading.value) {
@@ -41,12 +44,25 @@ const fetchOrders = async () => {
       )
       
       if (removedOrders.length > 0) {
+        const cancelledMap = new Map(cancelledData.map(o => [o.id, o]))
+        
+        let hasCancelAlert = false
+
         removedOrders.forEach((o) => {
-          if (!otherActions.value.some(a => a.id === o.id)) {
-            otherActions.value.push({ id: o.id, pickup_no: String(o.pickup_no) })
+          const cancelledOrder = cancelledMap.get(o.id)
+          if (cancelledOrder) {
+            if (!otherActions.value.some(a => a.id === o.id)) {
+              otherActions.value.push({ 
+                id: o.id, 
+                pickup_no: String(o.pickup_no),
+                reason: cancelledOrder.cancel_reason || '已取消'
+              })
+            }
+            hasCancelAlert = true
           }
         })
-        playAlert()
+
+        if (hasCancelAlert) playAlert()
       }
 
       previousIds = currentIds
@@ -138,19 +154,19 @@ const pendingCount = computed(() => orders.value.length)
     <main class="mt-8 flex-1">
       
       <div v-if="otherActions.length > 0" class="mb-6 flex flex-col gap-2">
-        <p class="eyebrow text-ink-mute">系統通知 (已由其他設備處理)</p>
+        <p class="eyebrow text-danger">取消通知</p>
         <div 
           v-for="action in otherActions" 
           :key="action.id"
-          class="flex items-center justify-between rounded-xl border border-line bg-gray-100 p-4"
+          class="flex items-center justify-between rounded-xl border border-red-200 bg-red-50 p-4"
         >
           <div class="flex items-center gap-3">
-            <span class="text-lg font-bold text-ink-mute">#{{ action.pickup_no }}</span>
-            <span class="text-sm font-medium text-ink-mute">已由其他人完成或取消</span>
+            <span class="text-lg font-bold text-red-700">#{{ action.pickup_no }}</span>
+            <span class="text-sm font-medium text-red-600">已由其他設備取消 ({{ action.reason }})</span>
           </div>
           <button 
             @click="dismissAction(action.id)"
-            class="rounded-lg bg-surface border border-line px-3 py-1.5 text-sm font-bold text-ink-soft shadow-sm active:scale-95"
+            class="rounded-lg bg-surface border border-red-200 px-3 py-1.5 text-sm font-bold text-red-600 shadow-sm active:scale-95"
           >
             我知道了
           </button>
